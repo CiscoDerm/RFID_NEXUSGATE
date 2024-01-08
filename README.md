@@ -16,7 +16,7 @@ Le projet implique les étapes suivantes :
 - Produire un rapport technique détaillé
 - Effectuer une évaluation 360.
 
-## Groupe 1
+## Groupe 
 Les membres du groupe 1 travaillant sur le projet sont :
 - Clayton
 - Yannick
@@ -31,4 +31,15 @@ Nous encourageons les contributions de la part de tous les membres du groupe. As
 
 ## Contact
 Pour toute question ou clarification, n'hésitez pas à contacter le responsable du projet ou à utiliser la section des problèmes (Issues) sur GitHub.
+
+## Avancé du Projet Arduino Code 
+Le code contient une carte "admin" qui à sont UID déjà inscrit dans le code. Nous avonsune deuxième carte qui n'a aucun accés pour l'instant.
+Lors de la lecture de la carte "admin", le messaege "Admin OK" s'aaffiche, de plus nous pouvons ajouter une "carte" en appuyant sur le bouton poussoir pour rentrer dans le mode ajout. Dans ce mode nous scannons la nouvelle carte et le message UID ajouté s'affiche et laisse place apres 3 secondes au message "Hotel Cyber". Apres cela la personne peut scanner sa carte et s'affiche donc le message "Acces OK" au lieu de "Acces refuse".
+
+## Composants presents
+  - Arduino
+  - RC522 RFID
+  - GROVE LCD RGB
+  - BUTTON GROVE
+  - 2 Cartes RFID 
 
