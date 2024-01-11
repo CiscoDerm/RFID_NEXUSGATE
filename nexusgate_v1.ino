@@ -2,22 +2,26 @@
 #include <MFRC522.h>
 #include <Wire.h>
 #include "rgb_lcd.h"
+#include <Servo.h>
 
 #define SS_PIN 10
 #define RST_PIN 9
 #define BUTTON_PIN 2
+#define SERVO_PIN 8
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 rgb_lcd lcd;
+Servo myServo;
 
 String authorizedUIDs[2] = {"63 CB A4 FC", ""}; // Stockage pour 2 UIDs
-bool addMode = false; // Mode d'ajout de carte activé
-unsigned long addModeStartTime; // Pour suivre le début du mode d'ajout
+bool addMode = false;
+unsigned long addModeStartTime;
 
 void setup() {
   SPI.begin();
   mfrc522.PCD_Init();
   lcd.begin(16, 2);
+  myServo.attach(SERVO_PIN);
 
   pinMode(BUTTON_PIN, INPUT);
   lcd.setRGB(255, 255, 255);
@@ -25,35 +29,33 @@ void setup() {
 }
 
 void loop() {
-  // Vérifie si une carte est présente
-  if ( ! mfrc522.PICC_IsNewCardPresent()) {
-    if (addMode && millis() - addModeStartTime > 5000) { // Quitter le mode ajout après 5 secondes
+  if (!mfrc522.PICC_IsNewCardPresent()) {
+    if (addMode && millis() - addModeStartTime > 5000) {
       addMode = false;
       lcd.clear();
       lcd.setRGB(255, 255, 255);
       lcd.print("Mode Ajout Termine");
-      delay(3000); // Affiche le message pendant 2 secondes
+      delay(3000);
       lcd.clear();
       lcd.setRGB(255, 255, 255);
       lcd.print("Hotel Cyber");
     }
     return;
   }
-  
-  if ( ! mfrc522.PICC_ReadCardSerial()) {
+
+  if (!mfrc522.PICC_ReadCardSerial()) {
     return;
   }
 
   lcd.clear();
 
-  String content= "";
+  String content = "";
   for (byte i = 0; i < mfrc522.uid.size; i++) {
-     content.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
-     content.concat(String(mfrc522.uid.uidByte[i], HEX));
+    content.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
+    content.concat(String(mfrc522.uid.uidByte[i], HEX));
   }
   content.toUpperCase();
 
-  // Vérifie si la carte est autorisée
   bool accessGranted = false;
   for (int i = 0; i < 2; i++) {
     if (content.substring(1) == authorizedUIDs[i]) {
@@ -62,34 +64,34 @@ void loop() {
     }
   }
 
-  if (content.substring(1) == authorizedUIDs[0]) { // Vérifie si c'est la carte administrateur
-    lcd.setRGB(0, 255, 0); // Vert
+  if (content.substring(1) == authorizedUIDs[0]) {
+    lcd.setRGB(0, 255, 0);
     lcd.print("Admin OK");
     delay(3000);
     lcd.clear();
     lcd.setRGB(255, 255, 255);
     lcd.print("Hotel Cyber");
 
-    // Vérifie si le bouton est pressé pour activer le mode d'ajout
     if (digitalRead(BUTTON_PIN) == HIGH) {
-      delay(50); // Debounce du bouton
+      delay(50);
       if (digitalRead(BUTTON_PIN) == HIGH) {
         addMode = true;
-        addModeStartTime = millis(); // Marque le début du mode d'ajout
+        addModeStartTime = millis();
         lcd.clear();
-        lcd.setRGB(255, 165, 0); // Orange
+        lcd.setRGB(255, 165, 0);
         lcd.print("Mode Ajout Carte");
       }
     }
   } else if (accessGranted) {
-    lcd.setRGB(0, 255, 0); // Vert
+    lcd.setRGB(0, 255, 0);
     lcd.print("Acces OK");
+    myServo.write(90); // Déplacer le servo
     delay(3000);
+    myServo.write(0); // Remettre le servo à la position initiale
     lcd.clear();
     lcd.setRGB(255, 255, 255);
     lcd.print("Hotel Cyber");
   } else if (addMode) {
-    // En mode ajout, stocke le nouvel UID et quitte le mode ajout
     if (authorizedUIDs[1] == "") {
       authorizedUIDs[1] = content.substring(1);
       lcd.setRGB(0, 255, 0);
@@ -101,7 +103,7 @@ void loop() {
       lcd.print("Hotel Cyber");
     }
   } else {
-    lcd.setRGB(255, 0, 0); // Rouge
+    lcd.setRGB(255, 0, 0);
     lcd.print("Acces Refuse");
     delay(3000);
     lcd.clear();
@@ -110,5 +112,5 @@ void loop() {
   }
 
   mfrc522.PICC_HaltA();
-  delay(1000); // Délai avant la prochaine lecture
+  delay(1000);
 }
