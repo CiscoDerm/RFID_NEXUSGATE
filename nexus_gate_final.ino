@@ -3,41 +3,21 @@
 #include <Wire.h>
 #include "rgb_lcd.h"
 #include <Servo.h>
-#include <EEPROM.h>
 
-#define SS_PIN 10
-#define RST_PIN 9
-#define BUTTON_PIN 2
-#define DELETE_BUTTON_PIN 3
-#define SERVO_PIN 8
+#define SS_PIN 10 // lcd grove
+#define RST_PIN 9 // lcd grove
+#define BUTTON_PIN 2 // pin ajouter une carte
+#define DELETE_BUTTON_PIN 3 // pin pour supprimer la carte
+#define SERVO_PIN 8 // pin servo moteur
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 rgb_lcd lcd;
 Servo myServo;
 
-String authorizedUIDs[10]; // Stockage pour 10 UIDs
-bool addMode = false;
-bool deleteMode = false;
+String authorizedUIDs[10] = {"63 CB A4 FC", "", "", "", "", "", "", "", "", ""}; // Stockage pour 10 UIDs
+bool addMode = false; // mode pour ajouter la carte
+bool deleteMode = false; // mode pour supprimer la carte
 unsigned long addModeStartTime;
-
-void loadAuthorizedUIDs() {
-  for (int i = 0; i < 10; i++) {
-    // Charger les UID depuis l'EEPROM
-    char uidBuffer[9];
-    EEPROM.get(i * 9, uidBuffer);
-    authorizedUIDs[i] = String(uidBuffer);
-  }
-}
-
-void saveAuthorizedUIDs() {
-  for (int i = 0; i < 10; i++) {
-    // Sauvegarder les UID dans l'EEPROM
-    char uidBuffer[9];
-    authorizedUIDs[i].toCharArray(uidBuffer, 9);
-    EEPROM.put(i * 9, uidBuffer);
-  }
-  EEPROM.commit();
-}
 
 void setup() {
   SPI.begin();
@@ -45,12 +25,10 @@ void setup() {
   lcd.begin(16, 2);
   myServo.attach(SERVO_PIN);
 
-  pinMode(BUTTON_PIN, INPUT);
-  pinMode(DELETE_BUTTON_PIN, INPUT);
+  pinMode(BUTTON_PIN, INPUT); // configuration du bouton pour ajouter la carte
+  pinMode(DELETE_BUTTON_PIN, INPUT); // configuration du bouton pour supprimer la carte
   lcd.setRGB(255, 255, 255);
   lcd.print("Pret a scanner");
-
-  loadAuthorizedUIDs();
 }
 
 void loop() {
@@ -95,9 +73,9 @@ void loop() {
   if (content.substring(1) == authorizedUIDs[0]) {
     lcd.setRGB(0, 255, 0);
     lcd.print("Admin OK");
-    myServo.write(90); // Déplacer le servo
-    delay(3000);
-    myServo.write(0); // Remettre le servo à la position initiale
+    myServo.write(90); // deplacer le servo
+    delay(5000);
+    myServo.write(0); // remettre le servo à la position initiale
     delay(3000);
     lcd.clear();
     lcd.setRGB(255, 255, 255);
@@ -107,7 +85,7 @@ void loop() {
       delay(50);
       if (digitalRead(BUTTON_PIN) == HIGH) {
         addMode = true;
-        deleteMode = false; // Assure que le mode suppression est désactivé
+        deleteMode = false; // assure que le mode suppression est desactive
         addModeStartTime = millis();
         lcd.clear();
         lcd.setRGB(255, 165, 0);
@@ -119,7 +97,7 @@ void loop() {
       delay(50);
       if (digitalRead(DELETE_BUTTON_PIN) == HIGH) {
         deleteMode = true;
-        addMode = false; // Assure que le mode ajout est désactivé
+        addMode = false; // assure que le mode ajout est desactive
         addModeStartTime = millis();
         lcd.clear();
         lcd.setRGB(255, 0, 0);
@@ -129,9 +107,9 @@ void loop() {
   } else if (accessGranted && !deleteMode) {
     lcd.setRGB(0, 255, 0);
     lcd.print("Acces OK");
-    myServo.write(90); // Déplacer le servo
-    delay(3000);
-    myServo.write(0); // Remettre le servo à la position initiale
+    myServo.write(90); // deplacer le servo
+    delay(5000);
+    myServo.write(0); // remettre le servo à la position initiale
     lcd.clear();
     lcd.setRGB(255, 255, 255);
     lcd.print("Hotel Cyber");
@@ -142,21 +120,19 @@ void loop() {
         lcd.setRGB(0, 255, 0);
         lcd.print("UID Ajoute");
         addMode = false;
-        saveAuthorizedUIDs(); // Sauvegarder dans l'EEPROM après ajout
         delay(3000);
         lcd.clear();
         lcd.setRGB(255, 255, 255);
         lcd.print("Hotel Cyber");
-        break; // Sort de la boucle après avoir ajouté l'UID
+        break; // sort de la boucle apres avoir ajouté l'UID
       }
     }
   } else if (deleteMode) {
     if (authorizedIndex != -1) {
-      authorizedUIDs[authorizedIndex] = ""; // Supprime l'UID de la liste autorisée
+      authorizedUIDs[authorizedIndex] = ""; // supprime l'UID de la liste autorisee
       lcd.setRGB(255, 0, 0);
       lcd.print("UID Supprime");
       deleteMode = false;
-      saveAuthorizedUIDs(); // Sauvegarder dans l'EEPROM après suppression
       delay(3000);
       lcd.clear();
       lcd.setRGB(255, 255, 255);
